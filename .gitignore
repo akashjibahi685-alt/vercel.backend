@@ -9,10 +9,11 @@ coverage/
 # Production/Build
 dist/
 build/
+.output/
 
-# Misc
-.DS_Store
-*.pem
+# Database files
+*.db
+*.sqlite
 
 # Local env files
 .env
@@ -35,3 +36,13 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# AI/IDE agent tooling (not project code)
+.agents/
+.claude/
+.windsurf/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.pem
