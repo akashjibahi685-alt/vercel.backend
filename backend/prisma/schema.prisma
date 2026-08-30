@@ -1,0 +1,391 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ClubBranding {
+  id              String   @id @default(uuid())
+  clubName        String   @default("AXION")
+  fullName        String?
+  tagline         String?
+  description     String?
+  primaryColor    String   @default("#0ea5e9")
+  secondaryColor  String   @default("#06b6d4")
+  accentColor     String   @default("#f59e0b")
+  logoUrl         String?
+  foundedYear     String?
+  university      String?
+  contactEmail    String?
+  githubUrl       String?
+  discordUrl      String?
+  linkedinUrl     String?
+  twitterUrl      String?
+  huggingfaceUrl  String?
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model User {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  passwordHash    String
+  role            String
+  title           String?
+  avatarUrl       String?
+  isAdmin         Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  lastLoginAt     DateTime?
+
+  permissions     Permission[]
+  memberProfile   Member?
+  studentProgress StudentProgress[]
+  activityLogs    ActivityLog[]
+  createdEvents   Event[]
+  createdProjects Project[]
+  blogPosts       BlogPost[]
+  announcements   Announcement[]
+  resources       Resource[]
+  updatedPages    CmsPage[]
+  notifications   Notification[]
+  reviewedRequests JoinRequest[]
+
+  achievements      Achievement[]
+  researchPapers    ResearchPaper[]
+  certificates      Certificate[]
+  internships       Internship[]
+  discussionThreads DiscussionThread[]
+  discussionReplies DiscussionReply[]
+}
+
+model Permission {
+  id          Int    @id @default(autoincrement())
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission  String
+}
+
+model Member {
+  id              String   @id @default(uuid())
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name            String
+  email           String   @unique
+  role            String   @default("Member")
+  status          String   @default("Active")
+  department      String?
+  githubUrl       String?
+  avatarUrl       String?
+  joinedDate      DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  skills          MemberSkill[]
+  eventRSVPs      EventAttendee[]
+  projectCredits  ProjectAuthor[]
+}
+
+model MemberSkill {
+  id          Int    @id @default(autoincrement())
+  memberId    String
+  member      Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  skill       String
+}
+
+model JoinRequest {
+  id              String   @id @default(uuid())
+  name            String
+  email           String
+  department      String?
+  motivation      String?
+  passwordHash    String?
+  status          String   @default("Pending")
+  reviewedById    String?
+  reviewedBy      User?    @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt      DateTime?
+  submittedAt     DateTime @default(now())
+}
+
+model Event {
+  id              String   @id @default(uuid())
+  title           String
+  type            String?
+  eventDate       DateTime
+  eventTime       String?
+  location        String?
+  speaker         String?
+  capacity        Int      @default(100)
+  status          String   @default("Upcoming")
+  description     String?
+  createdById     String?
+  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  tags            EventTag[]
+  attendees       EventAttendee[]
+}
+
+model EventTag {
+  id          Int    @id @default(autoincrement())
+  eventId     String
+  event       Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag         String
+}
+
+model EventAttendee {
+  id          String   @id @default(uuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  memberId    String?
+  member      Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  name        String
+  email       String
+  checkedIn   Boolean  @default(false)
+  rsvpAt      DateTime @default(now())
+
+  @@unique([eventId, email])
+}
+
+model LearningDomain {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  badgeColor      String?
+  accentColor     String?
+  level           String?
+  description     String?
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  resources       LearningResource[]
+}
+
+model LearningResource {
+  id              String   @id @default(uuid())
+  domainId        String
+  domain          LearningDomain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  title           String
+  type            String?
+  format          String?
+  duration        String?
+  instructor      String?
+  videoUrl        String?
+  githubUrl       String?
+  notesPdfUrl     String?
+  colabUrl        String?
+  description     String?
+  isFeatured      Boolean  @default(false)
+  viewCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  studentProgress StudentProgress[]
+}
+
+model StudentProgress {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId      String
+  resource        LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  completedAt     DateTime @default(now())
+
+  @@unique([userId, resourceId])
+}
+
+model Project {
+  id              String   @id @default(uuid())
+  name            String
+  category        String?
+  status          String   @default("Approved")
+  stars           Int      @default(0)
+  githubUrl       String?
+  demoUrl         String?
+  imageUrl        String?
+  description     String?
+  createdById     String?
+  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  authors         ProjectAuthor[]
+}
+
+model ProjectAuthor {
+  id          Int      @id @default(autoincrement())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId    String?
+  member      Member?  @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  authorName  String?
+}
+
+model BlogPost {
+  id              String   @id @default(uuid())
+  title           String
+  authorId        String?
+  author          User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorName      String?
+  category        String?
+  readTime        String?
+  publishedDate   DateTime @default(now())
+  status          String   @default("Draft")
+  coverImageUrl   String?
+  excerpt         String?
+  content         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model Announcement {
+  id              String   @id @default(uuid())
+  title           String
+  content         String?
+  urgency         String   @default("Normal")
+  isActive        Boolean  @default(true)
+  createdById     String?
+  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model Resource {
+  id              String   @id @default(uuid())
+  title           String
+  type            String?
+  size            String?
+  domain          String?
+  linkUrl         String?
+  downloads       Int      @default(0)
+  createdById     String?
+  createdBy       User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+}
+
+model CmsPage {
+  id              String   @id // 'hero', 'about', 'mission'
+  content         String   // Storing JSON as a string since SQLite doesn't natively support JSON type well in Prisma
+  updatedById     String?
+  updatedBy       User?    @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model Faq {
+  id              Int      @id @default(autoincrement())
+  question        String
+  answer          String
+  sortOrder       Int      @default(0)
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model Notification {
+  id              String   @id @default(uuid())
+  title           String
+  message         String?
+  audience        String?
+  channel         String?
+  sentById        String?
+  sentBy          User?    @relation(fields: [sentById], references: [id], onDelete: SetNull)
+  sentAt          DateTime @default(now())
+  deliveryRate    Float?
+}
+
+model ActivityLog {
+  id              Int      @id @default(autoincrement())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName        String?
+  action          String
+  target          String?
+  type            String?
+  metadata        String?  // Storing JSON as string
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+}
+
+model AdminInviteToken {
+  id              String   @id @default(uuid())
+  tokenHash       String   @unique
+  role            String
+  permissions     String   // Comma-separated array or JSON string
+  createdById     String?
+  usedById        String?
+  expiresAt       DateTime
+  usedAt          DateTime?
+  isUsed          Boolean  @default(false)
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  badgeUrl    String?
+  dateEarned  DateTime @default(now())
+}
+
+model ResearchPaper {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  abstract      String?
+  pdfUrl        String?
+  tags          String?  // JSON string or comma-separated
+  publishedDate DateTime @default(now())
+}
+
+model DiscussionThread {
+  id          String   @id @default(uuid())
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title       String
+  content     String
+  type        String   @default("General") // Problem, Research, General
+  status      String   @default("Open")    // Open, Resolved
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  replies     DiscussionReply[]
+}
+
+model DiscussionReply {
+  id          String   @id @default(uuid())
+  threadId    String
+  thread      DiscussionThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content     String
+  createdAt   DateTime @default(now())
+}
+
+model Certificate {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  issuer         String
+  issueDate      DateTime @default(now())
+  certificateUrl String?
+  createdAt      DateTime @default(now())
+}
+
+model Internship {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company     String
+  role        String
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  description String?
+  createdAt   DateTime @default(now())
+}

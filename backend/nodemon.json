@@ -1,0 +1,6 @@
+{
+  "watch": ["server.js", "routes/", "middleware/"],
+  "ignore": ["temp/", "uploads/", "prisma/", "node_modules/", "*.log"],
+  "ext": "js,mjs,cjs,json",
+  "delay": "500"
+}
